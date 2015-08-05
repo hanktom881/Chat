@@ -10,10 +10,14 @@ import android.widget.Toast;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 
 public class MainActivity extends Activity {
     GoogleCloudMessaging gcm ;
+    public static final String USERID = "tom";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +36,12 @@ public class MainActivity extends Activity {
             }
             try {
                 rid = gcm.register(SENDER_ID);
-
+                //將rid與userid 送到後端儲存
+                URL url = new URL("http://140.137.215.10:8080/atm/r?rid="+rid+"&uid="+USERID);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                InputStream is = conn.getInputStream();
+                int data = is.read();
+                is.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
