@@ -8,6 +8,11 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.extensions.android.json.AndroidJsonFactory;
+import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
+import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
+import com.tom.chat.backend.registration.Registration;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +23,7 @@ import java.net.URL;
 public class MainActivity extends Activity {
     GoogleCloudMessaging gcm ;
     public static final String USERID = "tom";
+    Registration regService;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,14 +40,29 @@ public class MainActivity extends Activity {
             if (gcm==null){
                 gcm = GoogleCloudMessaging.getInstance(getApplicationContext());
             }
+            if (regService==null){
+                Registration.Builder builder = new Registration.Builder(AndroidHttp.newCompatibleTransport(),
+                        new AndroidJsonFactory(), null)
+                        .setRootUrl("https://level-bond-102308.appspot.com/_ah/api/")
+                        .setGoogleClientRequestInitializer(new GoogleClientRequestInitializer() {
+                            @Override
+                            public void initialize(AbstractGoogleClientRequest<?> abstractGoogleClientRequest) throws IOException {
+                                abstractGoogleClientRequest.setDisableGZipContent(true);
+                            }
+                        });
+                regService = builder.build();
+            }
+
             try {
                 rid = gcm.register(SENDER_ID);
+                //送到GAE(backend)
+                regService.register(rid).execute();
                 //將rid與userid 送到後端儲存
-                URL url = new URL("http://140.137.215.10:8080/atm/r?rid="+rid+"&uid="+USERID);
+                /*URL url = new URL("http://140.137.215.10:8080/atm/r?rid="+rid+"&uid="+USERID);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 InputStream is = conn.getInputStream();
                 int data = is.read();
-                is.close();
+                is.close();*/
             } catch (IOException e) {
                 e.printStackTrace();
             }
